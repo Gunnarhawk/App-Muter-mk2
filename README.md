@@ -26,3 +26,6 @@ The number you input is the whole number percentage that you will find if you us
 
 # Enable & Disable
 Locate the [Enable] and [Disable] buttons at the top of the application window. To toggle the volume change functionality, just select the option that corresponds to the state you wish the application to be at
+
+# If You Have Any Issues or Suggestions
+The best way to contact me will be through my discord: **gunnarhawk** . Also make sure to check out my youtube https://www.youtube.com/@Gunnarhawk
