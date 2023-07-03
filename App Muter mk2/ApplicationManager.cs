@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace App_Muter_mk2
 {
@@ -11,16 +12,14 @@ namespace App_Muter_mk2
         public float current_app_volume = 0.0f;
         public float target_volume = 0.0f;
 
+        private string process_name = "";
+
         public ApplicationHandler(string _sProcessName)
         {
             if (!string.IsNullOrWhiteSpace(_sProcessName))
             {
                 GetProcessID(_sProcessName);
                 GetApplicationVolume();
-            }
-            else
-            {
-                Debug.WriteLine("ApplicationHandler: App was passed as null");
             }
         }
 
@@ -41,21 +40,49 @@ namespace App_Muter_mk2
 
         public void GetProcessID(string p_name)
         {
+            current_pid = 0;
+            process_name = p_name;
             Process[] _list = Process.GetProcessesByName(p_name);
             foreach (Process p in _list)
             {
                 if (!string.IsNullOrWhiteSpace(p.MainWindowTitle) && p.MainWindowHandle != IntPtr.Zero)
                 {
-                    Debug.WriteLine(p.ProcessName + " | " + p.Id);
                     current_pid = p.Id;
                 }
             }
         }
 
+        private ISimpleAudioVolume TryInitiVolumeObject(string p_name)
+        {
+            Process[] _list = Process.GetProcessesByName(p_name);
+            foreach(Process p in _list)
+            {
+                ISimpleAudioVolume volume = GetVolumeObject(p.Id);
+                Console.WriteLine(current_pid + " | " + p.Id);
+                if (volume != null)
+                {
+                    // set current id to the id of the process that has the interface available, surely this will not cause any problems in the future
+                    current_pid = p.Id;
+                    return volume;
+                }
+            }
+            return null;
+        }
+
         public void GetApplicationVolume()
         {
             ISimpleAudioVolume volume = GetVolumeObject(current_pid);
-            if (volume == null) current_app_volume = 0.0f;
+            if (volume == null)
+            {
+                // first volume check fails, so check sub processes for the audio interface
+                volume = TryInitiVolumeObject(process_name);
+                if(volume == null)
+                {
+                    // if volume is still null then this will not work
+                    MessageBox.Show("Cannot get application audio!\nMake sure that your application is currently playing some form of audio (make sure it is showing up in your volume mixer)\nAlso try restarting this program with administrative permissions");
+                    return;
+                }
+            }
 
             float level;
             volume.GetMasterVolume(out level);
@@ -95,25 +122,20 @@ namespace App_Muter_mk2
 
         private static ISimpleAudioVolume GetVolumeObject(int pid)
         {
-            // get the speakers (1st render + multimedia) device
             IMMDeviceEnumerator deviceEnumerator = (IMMDeviceEnumerator)(new MMDeviceEnumerator());
             IMMDevice speakers;
             deviceEnumerator.GetDefaultAudioEndpoint(EDataFlow.eRender, ERole.eMultimedia, out speakers);
 
-            // activate the session manager. we need the enumerator
             Guid IID_IAudioSessionManager2 = typeof(IAudioSessionManager2).GUID;
             object o;
             speakers.Activate(ref IID_IAudioSessionManager2, 0, IntPtr.Zero, out o);
             IAudioSessionManager2 mgr = (IAudioSessionManager2)o;
 
-            // enumerate sessions for on this device
             IAudioSessionEnumerator sessionEnumerator;
             mgr.GetSessionEnumerator(out sessionEnumerator);
             int count;
             sessionEnumerator.GetCount(out count);
 
-            // search for an audio session with the required name
-            // NOTE: we could also use the process id instead of the app name (with IAudioSessionControl2)
             ISimpleAudioVolume volumeControl = null;
             for (int i = 0; i < count; i++)
             {
@@ -129,6 +151,7 @@ namespace App_Muter_mk2
                 }
                 Marshal.ReleaseComObject(ctl);
             }
+
             Marshal.ReleaseComObject(sessionEnumerator);
             Marshal.ReleaseComObject(mgr);
             Marshal.ReleaseComObject(speakers);

@@ -91,8 +91,6 @@ namespace App_Muter_mk2
             eInput.RI_MOUSE_BUTTON_X_UP = hSettings.u_mask;
             eInput.RI_MOUSE_BUTTON_X_DOWN = hSettings.d_mask;
 
-            Debug.WriteLine($"{key} | {m_btn} | {a} | {hSettings.u_mask} | {hSettings.d_mask}");
-
             RegisterProcessHandles(true);
         }
 
@@ -225,7 +223,6 @@ namespace App_Muter_mk2
 
         private void CbApp_SelectedValueChanged(object sender, EventArgs e)
         {
-            Debug.WriteLine("here");
             hSettings.UpdateSettings("", cbApp.Text, 0.0f, 0, 0, hApplication);
         }
 
