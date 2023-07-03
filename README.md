@@ -3,7 +3,7 @@ This application was made for the Titanfall 2 speedrun community in order to mut
 Currently the application only accepts mouse input functionality, but will implement keyboard inputs if someone wants it
 
 # Installation
-Install the latest release build, make sure to keep it in a solo directory as it will make a settings.xml file upon launch
+Install the latest release build, make sure to keep it in a solo directory as it will make a settings.xml file upon launch. If an application is not working for you, try running this with administrative permissions
 
 # How it works
 After you set a bind and choose an application, whenever you press and hold that bind the application will be set to the target volume which by default is set to 0  
